@@ -1,3 +1,4 @@
+import csv
 from clases import Particion,Proceso
 from tabulate import tabulate
 
@@ -5,29 +6,41 @@ class Simulador:
     particiones=list()
     procesos=list()
 
-    def crearParticion(self):
-        #hago asi nomas las particiones y procesos para probar que ande best-fit
-        par1=Particion('pa1',60000,1) #como se haria para tener la dirInicio? porque en C estaba malloc para reservar memoria
-        par2=Particion('pa2', 120000,1000)
-        par3=Particion('pa3',250000, 3455)
+    def crearParticiones(self):
+        so=Particion('so', 100000)
+        par1=Particion('pa1',60000) 
+        par2=Particion('pa2', 120000)
+        par3=Particion('pa3',250000)
         self.particiones.append(par1)
         self.particiones.append(par2)
         self.particiones.append(par3)
 
-    def crearProceso(self):
-        p1=Proceso('p1',60001,0,4)
-        p2=Proceso('p2',120001,0,3)
-        p3=Proceso('p3',26423,2,5)
-        p4=Proceso('p4',1902,3,4)
-        self.procesos.append(p1)
-        self.procesos.append(p2)
-        self.procesos.append(p3)
-        self.asignarParticion(p1)
-        self.asignarParticion(p3)
-        self.desasignarParticion(p1)
-        #self.asignarParticion(p2)
-        self.asignarParticion(p1)
-        self.asignarParticion(p4)
+    def ingresarProcesos(self):
+        i=0
+        with open("/Users/ESTEFANIA/Documents/GitHub/grupo4-so/archivo.csv") as archivo:
+            entrada = csv.reader(archivo, skipinitialspace=True, strict=True)
+            next(entrada, None) #ignora la cabecera
+            for linea in entrada:
+                if not (linea): #saltea lineas vacias
+                    continue
+                if(i<10): #maximo 10 procesos
+                    linea.extend((None,None,None)) 
+                    if(linea[1] is None) or (linea[2] is None) or (linea[3]is None): #si a un proceso le falta tamanio,TA, o TI da error
+                        print('Error: a Proceso ', linea[0], 'le falta datos')
+                    else:
+                        if(int(linea[1])<=250000): #si el tamanio es menor o igual a la particion mas grande
+                            self.procesos.append(Proceso(linea[0], linea[1], linea[2], linea[3]))
+                            i=i+1 #las lineas que dan error no se cuentan o tendrian que contar??
+                        else:
+                            print('Error: Proceso ', linea[0], 'supera tamanio de particiones existentes')
+                else:
+                    print("Se supero maximo numero de procesos. Se leyeron los 10 primeros.")
+                    break
+
+        self.procesos.sort(key=lambda x: x.TA) #ordena por TA, como ordenar si TA de 2 procesos son iguales??
+        archivo.close()
+        #for i in self.procesos:
+        #    print(i.idProceso, i.tamanio, i.TA, i.TI)
 
     def asignarParticion(self, unProceso):
         #se asigna particion de memoria utilizando tecnica best-fit
@@ -67,9 +80,9 @@ class Simulador:
 
 
 
-s =Simulador()
-s.crearParticion()
-s.crearProceso()
+s=Simulador()
+s.crearParticiones()
+s.ingresarProcesos()
 s.mostrarTablaParticiones()
 
 
