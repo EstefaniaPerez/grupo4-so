@@ -1,10 +1,13 @@
 import csv
-from clases import Particion,Proceso
+from clases import Particion, Proceso, Procesador
 from tabulate import tabulate
 
 class Simulador:
     particiones=list()
-    procesos=list()
+    colaNuevos=list()
+    colaListos=list()
+    procesador=Procesador(None)
+    t=-1
 
     def crearParticiones(self):
         so=Particion('so', 100000)
@@ -29,7 +32,7 @@ class Simulador:
                         print('Error: a Proceso ', linea[0], 'le falta datos')
                     else:
                         if(int(linea[1])<=250000): #si el tamanio es menor o igual a la particion mas grande
-                            self.procesos.append(Proceso(linea[0], linea[1], linea[2], linea[3]))
+                            self.colaNuevos.append(Proceso(linea[0], int(linea[1]), int(linea[2]), int(linea[3])))
                             i=i+1 #las lineas que dan error no se cuentan o tendrian que contar??
                         else:
                             print('Error: Proceso ', linea[0], 'supera tamanio de particiones existentes')
@@ -37,10 +40,9 @@ class Simulador:
                     print("Se supero maximo numero de procesos. Se leyeron los 10 primeros.")
                     break
 
-        self.procesos.sort(key=lambda x: x.TA) #ordena por TA, como ordenar si TA de 2 procesos son iguales??
+        self.colaNuevos.sort(key=lambda x: x.TA) #ordena por TA--> planificador a largo plazo
         archivo.close()
-        #for i in self.procesos:
-        #    print(i.idProceso, i.tamanio, i.TA, i.TI)
+        
 
     def asignarParticion(self, unProceso):
         #se asigna particion de memoria utilizando tecnica best-fit
@@ -50,9 +52,10 @@ class Simulador:
             if(frag>=0 and self.particiones[i].proceso is None): #particion de tamaño mayor o igual al proceso y sin proceso asignado
                 self.particiones[i].proceso=unProceso
                 self.particiones[i].fragmentacion=frag
-                i=9999
+                return True
             else:
                 i=i+1
+        return False  #si recorrio todas las particiones y ninguna puede alojar al proceso, devuelve f
     
     def desasignarParticion(self, unProceso):
         i=0
@@ -66,6 +69,7 @@ class Simulador:
 
     def mostrarTablaParticiones(self):
         aux=Proceso('-',0,0,0)
+        print("Tabla de Particiones")
         for i in range(len(self.particiones)):
             if(self.particiones[i].proceso is None):
                 self.particiones[i].proceso=aux
@@ -75,7 +79,55 @@ class Simulador:
                 [self.particiones[2].idParticion, self.particiones[2].dirInicio, self.particiones[2].tamanio, self.particiones[2].proceso.idProceso, self.particiones[2].fragmentacion]]
         print(tabulate(tabla, headers='firstrow', tablefmt='fancy_grid',stralign='center'))
 
+    def salida(self):
+        print("\n---------------------------------------------------------------")
+        print("\nEstado del Procesador:")
+        print("     Proceso ejecutandose en tiempo=",self.t, ": ", self.procesador.proceso.idProceso ,"\n")
+        self.mostrarTablaParticiones()
+        print("\nEstado de la Cola de Listos:")
+        for i in self.colaListos:
+          print("   Proceso:", i.idProceso, ". Tamanio:", i.tamanio, ". Tiempo de Arribo:", i.TA,  ". Tiempo de Irrupcion:", i.TI)
+        print("\n---------------------------------------------------------------")
+
+
+    
+    def ordenarColaListos(self):
+        i=0
+        #print("\n t:", self.t,". proceso:", self.colaNuevos[i].idProceso,"\n")
+        while (self.colaNuevos and i<len(self.colaNuevos)) : #mientras haya procesos con TA <= t actual en colaNuevos
+            if(self.colaNuevos[i].TA<=self.t and self.asignarParticion(self.colaNuevos[i])) : #si a ese proceso se le puede asignar alguna particion
+                self.colaListos.append(self.colaNuevos[i])
+                self.colaNuevos.pop(i) 
+            else:
+                i=i+1
+        self.colaListos.sort(key=lambda x: x.TI) #ordena por TI a la cola de listos
+
+
+    def planificar(self):
+        while (self.colaNuevos or self.colaListos): #hacer mientras haya procesos nuevos o listos
+            self.t=self.t+1
+            
+
+            if(self.procesador.ocupado): #si hay algun proceso ejecutandose, se decrementa su tiempo restante en cpu
+                self.procesador.tiempoRestante=self.procesador.tiempoRestante-1
+                if(self.procesador.tiempoRestante==0): #si se termino tiempo I de proceso se lo saca del procesador
+                    self.procesador.ocupado=False
+                    self.desasignarParticion(self.procesador.proceso)
+                    self.procesador.proceso=None
+
+            self.ordenarColaListos()  #en cada tiempo t actual ordena la cola de listos
+
+            if (not self.procesador.ocupado and self.colaListos):  
+                #si el procesador no esta ocupado y hay procesos listos, ejecuta el siguiente con menor TI en cola de listos
+                self.procesador.ocupado=True
+                self.procesador.proceso=self.colaListos[0] 
+                self.procesador.tiempoRestante=self.colaListos[0].TI
+                self.colaListos.pop(0)
+                self.salida()  #Las presentaciones de salida deberán realizarse cada vez que llega un nuevo proceso-->se refiere a cada que ingresa un proceso a CPU?
         
+            
+        
+
         
 
 
@@ -83,7 +135,7 @@ class Simulador:
 s=Simulador()
 s.crearParticiones()
 s.ingresarProcesos()
-s.mostrarTablaParticiones()
+s.planificar()
 
 
     

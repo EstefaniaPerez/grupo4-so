@@ -13,4 +13,12 @@ class Particion:
         self.fragmentacion=0
         self.proceso=None
 
+class Procesador:
+    def __init__(self, unProceso):
+        self.proceso=unProceso
+        self.ocupado=False
+        self.tiempoRestante=0
+
+
+
 
