@@ -24,8 +24,10 @@ class Simulador:
 
     def ingresarProcesos(self):
         i=0
-    
-        with open("/archivo.csv") as archivo:
+        script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
+        rel_path = "archivo.csv"
+        abs_file_path = os.path.join(script_dir, rel_path)
+        with open(abs_file_path) as archivo:
             entrada = csv.reader(archivo, skipinitialspace=True, strict=True)
             next(entrada, None) #ignora la cabecera
             for linea in entrada:
@@ -132,12 +134,6 @@ class Simulador:
                 self.salida()  #Las presentaciones de salida deberán realizarse cada vez que llega un nuevo proceso-->se refiere a cada que ingresa un proceso a CPU?
         
             
-        
-
-        
-
-
-
 s=Simulador()
 s.crearParticiones()
 s.ingresarProcesos()
