@@ -1,6 +1,8 @@
 import csv
 from clases import Particion, Proceso, Procesador
 from tabulate import tabulate
+import os
+
 
 class Simulador:
     particiones=list()
@@ -8,19 +10,22 @@ class Simulador:
     colaListos=list()
     procesador=Procesador(None)
     t=-1
+    direccion=0
 
     def crearParticiones(self):
-        so=Particion('so', 100000)
-        par1=Particion('pa1',60000) 
-        par2=Particion('pa2', 120000)
-        par3=Particion('pa3',250000)
+        direccion=(id(self))
+        so=Particion('so', 100000, direccion)
+        par1=Particion('pa1', 60000, direccion+100000) 
+        par2=Particion('pa2', 120000, direccion+160000)
+        par3=Particion('pa3',250000, direccion+280000)
         self.particiones.append(par1)
         self.particiones.append(par2)
         self.particiones.append(par3)
 
     def ingresarProcesos(self):
         i=0
-        with open("/Users/ESTEFANIA/Documents/GitHub/grupo4-so/archivo.csv") as archivo:
+    
+        with open("/archivo.csv") as archivo:
             entrada = csv.reader(archivo, skipinitialspace=True, strict=True)
             next(entrada, None) #ignora la cabecera
             for linea in entrada:
@@ -49,7 +54,7 @@ class Simulador:
         i=0
         while(i<len(self.particiones)): #considerando que la lista de particiones esta ordenada de menor a mayor tamaño
             frag=self.particiones[i].tamanio-unProceso.tamanio
-            if(frag>=0 and self.particiones[i].proceso is None): #particion de tamaño mayor o igual al proceso y sin proceso asignado
+            if(frag>=0 and (self.particiones[i].proceso is None or self.particiones[i].proceso.idProceso=='-')): #particion de tamaño mayor o igual al proceso y sin proceso asignado
                 self.particiones[i].proceso=unProceso
                 self.particiones[i].fragmentacion=frag
                 return True
@@ -98,6 +103,7 @@ class Simulador:
             if(self.colaNuevos[i].TA<=self.t and self.asignarParticion(self.colaNuevos[i])) : #si a ese proceso se le puede asignar alguna particion
                 self.colaListos.append(self.colaNuevos[i])
                 self.colaNuevos.pop(i) 
+                
             else:
                 i=i+1
         self.colaListos.sort(key=lambda x: x.TI) #ordena por TI a la cola de listos

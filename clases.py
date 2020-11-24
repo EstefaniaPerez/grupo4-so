@@ -6,12 +6,12 @@ class Proceso:
         self.TI=TI
 
 class Particion:
-    def __init__(self, idParticion, tamanio):
+    def __init__(self, idParticion, tamanio, direccion):
         self.idParticion=idParticion
         self.tamanio=tamanio
-        self.dirInicio=hex(id(self))
+        self.dirInicio=hex(direccion)
         self.fragmentacion=0
-        self.proceso=None
+        self.proceso= None
 
 class Procesador:
     def __init__(self, unProceso):
