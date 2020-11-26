@@ -11,6 +11,7 @@ class Simulador:
     procesador=Procesador(None)
     t=-1
     direccion=0
+    auxiliar=-1
 
     def crearParticiones(self):
         direccion=(id(self))
@@ -24,7 +25,7 @@ class Simulador:
 
     def ingresarProcesos(self):
         i=0
-        script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
+        script_dir = os.path.dirname(__file__) 
         rel_path = "archivo.csv"
         abs_file_path = os.path.join(script_dir, rel_path)
         with open(abs_file_path) as archivo:
@@ -40,7 +41,7 @@ class Simulador:
                     else:
                         if(int(linea[1])<=250000): #si el tamanio es menor o igual a la particion mas grande
                             self.colaNuevos.append(Proceso(linea[0], int(linea[1]), int(linea[2]), int(linea[3])))
-                            i=i+1 #las lineas que dan error no se cuentan o tendrian que contar??
+                            i=i+1 
                         else:
                             print('Error: Proceso ', linea[0], 'supera tamanio de particiones existentes')
                 else:
@@ -89,32 +90,45 @@ class Simulador:
     def salida(self):
         print("\n---------------------------------------------------------------")
         print("\nEstado del Procesador:")
-        print("     Proceso ejecutandose en tiempo=",self.t, ": ", self.procesador.proceso.idProceso ,"\n")
+        if(self.procesador.ocupado):
+            print("     Proceso ejecutandose en tiempo=",self.t, ": ", self.procesador.proceso.idProceso ,"\n")
+        else:
+            print("     Proceso ejecutandose en tiempo=",self.t, ": ", " - \n")
         self.mostrarTablaParticiones()
         print("\nEstado de la Cola de Listos:")
         for i in self.colaListos:
           print("   Proceso:", i.idProceso, ". Tamanio:", i.tamanio, ". Tiempo de Arribo:", i.TA,  ". Tiempo de Irrupcion:", i.TI)
         print("\n---------------------------------------------------------------")
-
+       
+       
+    def verColaNuevos(self):
+        i=0
+        while (self.colaNuevos and i<len(self.colaNuevos)) :
+            if((i<len(self.colaNuevos)-1) and self.colaNuevos[i].TA==self.t and self.colaNuevos[i].TA!=self.colaNuevos[i+1].TA):
+                self.salida()
+                self.auxiliar=self.t
+            elif(i==len(self.colaNuevos)-1 and self.colaNuevos[i].TA==self.t and self.colaNuevos[i].TA!=self.colaNuevos[i-1].TA):
+                self.salida()
+                self.auxiliar=self.t
+            i=i+1
 
     
     def ordenarColaListos(self):
         i=0
-        #print("\n t:", self.t,". proceso:", self.colaNuevos[i].idProceso,"\n")
         while (self.colaNuevos and i<len(self.colaNuevos)) : #mientras haya procesos con TA <= t actual en colaNuevos
             if(self.colaNuevos[i].TA<=self.t and self.asignarParticion(self.colaNuevos[i])) : #si a ese proceso se le puede asignar alguna particion
                 self.colaListos.append(self.colaNuevos[i])
-                self.colaNuevos.pop(i) 
+                self.colaNuevos.pop(i)
                 
             else:
                 i=i+1
+        
         self.colaListos.sort(key=lambda x: x.TI) #ordena por TI a la cola de listos
 
 
     def planificar(self):
         while (self.colaNuevos or self.colaListos): #hacer mientras haya procesos nuevos o listos
             self.t=self.t+1
-            
 
             if(self.procesador.ocupado): #si hay algun proceso ejecutandose, se decrementa su tiempo restante en cpu
                 self.procesador.tiempoRestante=self.procesador.tiempoRestante-1
@@ -124,6 +138,7 @@ class Simulador:
                     self.procesador.proceso=None
 
             self.ordenarColaListos()  #en cada tiempo t actual ordena la cola de listos
+            
 
             if (not self.procesador.ocupado and self.colaListos):  
                 #si el procesador no esta ocupado y hay procesos listos, ejecuta el siguiente con menor TI en cola de listos
@@ -131,8 +146,10 @@ class Simulador:
                 self.procesador.proceso=self.colaListos[0] 
                 self.procesador.tiempoRestante=self.colaListos[0].TI
                 self.colaListos.pop(0)
-                self.salida()  #Las presentaciones de salida deberán realizarse cada vez que llega un nuevo proceso-->se refiere a cada que ingresa un proceso a CPU?
-        
+                self.salida()  
+            elif(self.procesador.ocupado):
+                self.verColaNuevos()
+
             
 s=Simulador()
 s.crearParticiones()
