@@ -8,6 +8,7 @@ class Simulador:
     particiones=list()
     colaNuevos=list()
     colaListos=list()
+    colaAuxiliar=list()
     procesador=Procesador(None)
     t=-1
     direccion=0
@@ -100,21 +101,22 @@ class Simulador:
           print("   Proceso:", i.idProceso, ". Tamanio:", i.tamanio, ". Tiempo de Arribo:", i.TA,  ". Tiempo de Irrupcion:", i.TI)
         print("\n---------------------------------------------------------------")
        
-       
-    def verColaNuevos(self):
+
+    def verColaNuevos(self): #funcion para comprobar que no se muestre la salida varias veces en el mismo t
         i=0
-        while (self.colaNuevos and i<len(self.colaNuevos)) :
-            if((i<len(self.colaNuevos)-1) and self.colaNuevos[i].TA==self.t and self.colaNuevos[i].TA!=self.colaNuevos[i+1].TA):
+        while (self.colaAuxiliar and i<len(self.colaAuxiliar)) :
+            if((i<len(self.colaAuxiliar)-1) and self.colaAuxiliar[i].TA==self.t and self.colaAuxiliar[i].TA!=self.colaAuxiliar[i+1].TA ) :
                 self.salida()
-                self.auxiliar=self.t
-            elif(i==len(self.colaNuevos)-1 and self.colaNuevos[i].TA==self.t and self.colaNuevos[i].TA!=self.colaNuevos[i-1].TA):
+
+            elif(i==len(self.colaAuxiliar)-1 and self.colaAuxiliar[i].TA==self.t and self.colaAuxiliar[i].TA!=self.colaAuxiliar[i-1].TA ):
                 self.salida()
-                self.auxiliar=self.t
+                
             i=i+1
 
     
     def ordenarColaListos(self):
         i=0
+        self.colaAuxiliar=self.colaNuevos.copy()
         while (self.colaNuevos and i<len(self.colaNuevos)) : #mientras haya procesos con TA <= t actual en colaNuevos
             if(self.colaNuevos[i].TA<=self.t and self.asignarParticion(self.colaNuevos[i])) : #si a ese proceso se le puede asignar alguna particion
                 self.colaListos.append(self.colaNuevos[i])
@@ -122,6 +124,7 @@ class Simulador:
                 
             else:
                 i=i+1
+        
         
         self.colaListos.sort(key=lambda x: x.TI) #ordena por TI a la cola de listos
 
