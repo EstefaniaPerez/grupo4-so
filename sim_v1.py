@@ -12,7 +12,6 @@ class Simulador:
     procesador=Procesador(None)
     t=-1
     direccion=0
-    auxiliar=-1
 
     def crearParticiones(self):
         direccion=(id(self))
@@ -89,7 +88,7 @@ class Simulador:
         print(tabulate(tabla, headers='firstrow', tablefmt='fancy_grid',stralign='center'))
 
     def salida(self):
-        print("\n---------------------------------------------------------------")
+        print("\n----------------------------------------------------------------------------------------------------------------------------")
         print("\nEstado del Procesador:")
         if(self.procesador.ocupado):
             print("     Proceso ejecutandose en tiempo=",self.t, ": ", self.procesador.proceso.idProceso ,"\n")
@@ -99,7 +98,7 @@ class Simulador:
         print("\nEstado de la Cola de Listos:")
         for i in self.colaListos:
           print("   Proceso:", i.idProceso, ". Tamanio:", i.tamanio, ". Tiempo de Arribo:", i.TA,  ". Tiempo de Irrupcion:", i.TI)
-        print("\n---------------------------------------------------------------")
+        print("\n----------------------------------------------------------------------------------------------------------------------------")
        
 
     def verColaNuevos(self): #funcion para comprobar que no se muestre la salida varias veces en el mismo t
@@ -158,6 +157,7 @@ s=Simulador()
 s.crearParticiones()
 s.ingresarProcesos()
 s.planificar()
+input('Press ENTER to exit')
 
 
     
